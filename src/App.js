@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import Alert from "./components/Alert";
 
@@ -7,11 +7,66 @@ function App() {
   const [alertClassName, setAlertClassName] = useState("d-none")
   const [jwtToken, setJwtToken] = useState("")
 
+  const [ticking, setTicking] = useState(false)
+  const [tickInterval, setTickInterval] = useState()
+
   const navigate = useNavigate();
 
   const logOut = () => {
-    setJwtToken("")
-    navigate("/")
+    const requestOptions = {
+      method: "GET",
+      credentials: "include",
+    }
+
+    fetch(`/logout`, requestOptions)
+      .catch(error => {
+        console.error("could not log out", error)
+      })
+      .finally(()=> {
+        setJwtToken("")
+      })
+      navigate("/")
+  }
+
+  useEffect(() => {
+    if( jwtToken === "") {
+      const requestOptions = {
+        method: "GET",
+        credentials: "include",
+      }
+
+      fetch(`/refresh`, requestOptions)
+        .then((response) => response.json())
+        .then((data) => {
+          if(data.access_token){
+            setJwtToken(data.access_token)
+          }
+        })
+        .catch(error => {
+          console.error("user not logged in", error)
+        })
+    }
+  }, [jwtToken])
+
+  const toggleRefresh = () => {
+    console.log("click");
+
+    if( !ticking ){
+      console.log('turning ticking on')
+      let i = setInterval(() => {
+        console.log("this will run every second");
+      }, 1000)
+      setTickInterval(i)
+      setTicking(true)
+      console.log("set tick interval to ",  i);
+    }
+    else{
+      console.log('turn off ticking')
+      console.log('turn off tickingInterval', tickInterval)
+      setInterval(null)
+      clearInterval(tickInterval)
+      setTicking(false)
+    }
   }
 
   return (
@@ -58,6 +113,7 @@ function App() {
           </nav>
         </div>
         <div className="col-md-10">
+          <a className="button button-outline-secondary" href="#!" onClick={toggleRefresh}>Toggle interval </a>
           <Alert
             message={alertMessage}
             className={alertClassName}

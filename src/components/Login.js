@@ -12,18 +12,41 @@ const Login = () => {
 
     const handleSubmit = (event) => {
         event.preventDefault()
-        if(email==="admin@admin.com"){ //faker w/o backend api
-            setJwtToken("abc")
-            setAlertClassName("d-none")
-            setAlertMessage("")
+        
+        //build the request payload
+        let payload = {
+            email: email,
+            password: password
+        }
 
-            navigate("/")
+        const requestOptions = {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(payload)
         }
-        else{
+
+        fetch(`/authenticate`, requestOptions)
+        .then((response) => response.json())
+        .then((data) => {
+            if(data.error){
+                setAlertClassName("alert-danger")
+                setAlertMessage(data.message)
+            }
+            else{
+                setJwtToken(data.access_token);
+                setAlertClassName("d-none")
+                setAlertMessage("")
+                navigate("/")
+            }
+        }).catch(error => {
             setAlertClassName("alert-danger")
-            setAlertMessage("Invalid Credentials")
-        }
+            setAlertMessage(error)
+        })
     }
+
     return (
         <>
         <div className="col-md-6 offset-md-3">
